@@ -19,6 +19,7 @@ public class SpawnManager : MonoBehaviour
     {
         // Если MRUK не инициализирован или комната не загружена — ждем
         if (MRUK.Instance == null || MRUK.Instance.GetCurrentRoom() == null) return;
+        if (GameManager.Instance != null && !GameManager.Instance.isGameActive) return;
 
         _timer -= Time.deltaTime;
         if (_timer <= 0)

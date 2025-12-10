@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class SimpleBlaster : MonoBehaviour
 {
@@ -30,7 +31,10 @@ public class SimpleBlaster : MonoBehaviour
     {
         DrawLaser(); 
 
-        if (OVRInput.GetDown(OVRInput.Button.SecondaryIndexTrigger) || Input.GetKeyDown(KeyCode.Space))
+        if (GameManager.Instance != null && !GameManager.Instance.isGameActive) return;
+        if (EventSystem.current.IsPointerOverGameObject()) return;
+
+        if (OVRInput.GetDown(OVRInput.Button.SecondaryIndexTrigger))
         {
             Shoot();
         }

@@ -28,6 +28,7 @@ TagManager:
   - QDSUITextInputField
   - SamplesInfoPanel
   - QDSUIToggleCheckboxRadio
+  - Enemy
   layers:
   - Default
   - TransparentFX
