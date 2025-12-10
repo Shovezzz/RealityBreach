@@ -2,16 +2,29 @@ using UnityEngine;
 
 public class EnemyHealth : MonoBehaviour
 {
+    public GameObject explosionPrefab;
+
     public void TakeDamage()
     {
-
-        Debug.Log("Враг уничтожен!");
         if (GameManager.Instance != null)
         {
             GameManager.Instance.AddScore(100);
         }
-        Destroy(gameObject);
+        Die();
+    }
 
-        // Тут позже можно добавить эффекты взрыва
+    public void SelfDestruct()
+    {
+        Die();
+    }
+
+    private void Die()
+    {
+        if (explosionPrefab != null)
+        {
+            Instantiate(explosionPrefab, transform.position, transform.rotation);
+        }
+
+        Destroy(gameObject);
     }
 }

@@ -4,6 +4,7 @@ public class PlayerHealth : MonoBehaviour
 {
     public int maxHealth = 100;
     private int currentHealth;
+    public AudioSource hitAudio;
 
     void Start()
     {
@@ -14,6 +15,7 @@ public class PlayerHealth : MonoBehaviour
     {
         currentHealth -= damage;
         GameManager.Instance.UpdateHP(currentHealth);
+        if (hitAudio != null) hitAudio.Play();
         Debug.Log($"Игрок получил урон! HP: {currentHealth}");
 
         if (currentHealth <= 0)

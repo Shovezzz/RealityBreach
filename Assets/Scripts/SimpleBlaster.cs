@@ -1,31 +1,36 @@
 using UnityEngine;
 
-[RequireComponent(typeof(LineRenderer))] // Автоматически добавит компонент
+[RequireComponent(typeof(LineRenderer))]
 public class SimpleBlaster : MonoBehaviour
 {
+    [Header("Настройки оружия")]
     public Transform muzzlePoint;
-    public float range = 100f;
+    public float range = 50f;     
+    public LayerMask hitLayers;   
+
+    [Header("Снаряд")]
+    public GameObject bulletPrefab;
+    public float bulletSpeed = 15f; 
+
+    [Header("Визуал")]
+    public ParticleSystem muzzleFlash;
+    public AudioSource gunAudio;
+    public Animator gunAnimator;
+    public string triggerName = "Fire";
 
     private LineRenderer laserLine;
 
     void Start()
     {
         laserLine = GetComponent<LineRenderer>();
-
-        // Настройка лазера через код (чтобы не возиться в инспекторе)
-        laserLine.startWidth = 0.01f;
-        laserLine.endWidth = 0.01f;
-        laserLine.material = new Material(Shader.Find("Sprites/Default")); // Простой белый материал
-        laserLine.startColor = Color.red;
-        laserLine.endColor = Color.red;
+        // Если не выставить слои в инспекторе, ставим "Все" по умолчанию
+        if (hitLayers == 0) hitLayers = ~0;
     }
 
     void Update()
     {
-        // Рисуем лазер всегда
-        DrawLaser();
+        DrawLaser(); 
 
-        // Стрельба (Курок или Пробел)
         if (OVRInput.GetDown(OVRInput.Button.SecondaryIndexTrigger) || Input.GetKeyDown(KeyCode.Space))
         {
             Shoot();
@@ -34,30 +39,49 @@ public class SimpleBlaster : MonoBehaviour
 
     void DrawLaser()
     {
-        laserLine.SetPosition(0, muzzlePoint.position); // Начало линии
+        laserLine.SetPosition(0, muzzlePoint.position);
 
-        // Конец линии (либо точка удара, либо макс. дистанция)
         RaycastHit hit;
-        if (Physics.Raycast(muzzlePoint.position, muzzlePoint.forward, out hit, range))
+        // Используем hitLayers, чтобы луч видел стены
+        if (Physics.Raycast(muzzlePoint.position, muzzlePoint.forward, out hit, range, hitLayers))
         {
-            laserLine.SetPosition(1, hit.point);
+            laserLine.SetPosition(1, hit.point); 
         }
         else
         {
-            laserLine.SetPosition(1, muzzlePoint.position + muzzlePoint.forward * range);
+            laserLine.SetPosition(1, muzzlePoint.position + muzzlePoint.forward * range); 
         }
     }
 
     void Shoot()
     {
+        if (gunAnimator != null) gunAnimator.SetTrigger(triggerName);
+        if (muzzleFlash != null) muzzleFlash.Play();
+        if (gunAudio != null) gunAudio.Play();
+
         RaycastHit hit;
-        if (Physics.Raycast(muzzlePoint.position, muzzlePoint.forward, out hit, range))
+        Vector3 targetPoint;
+        EnemyHealth targetEnemy = null;
+
+        if (Physics.Raycast(muzzlePoint.position, muzzlePoint.forward, out hit, range, hitLayers))
         {
-            // Проверка на врага
-            EnemyHealth enemy = hit.collider.GetComponent<EnemyHealth>();
-            if (enemy != null)
+            targetPoint = hit.point;
+            targetEnemy = hit.collider.GetComponent<EnemyHealth>();
+        }
+        else
+        {
+            targetPoint = muzzlePoint.position + muzzlePoint.forward * range;
+        }
+
+        if (bulletPrefab != null)
+        {
+            GameObject bullet = Instantiate(bulletPrefab, muzzlePoint.position, Quaternion.identity);
+            BulletMover mover = bullet.GetComponent<BulletMover>();
+
+            if (mover != null)
             {
-                enemy.TakeDamage();
+                mover.speed = bulletSpeed; 
+                mover.Setup(targetPoint, targetEnemy);
             }
         }
     }
