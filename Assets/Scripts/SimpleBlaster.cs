@@ -1,6 +1,5 @@
 using UnityEngine;
 
-[RequireComponent(typeof(LineRenderer))]
 public class SimpleBlaster : MonoBehaviour
 {
     [Header("Настройки оружия")]
@@ -22,7 +21,7 @@ public class SimpleBlaster : MonoBehaviour
 
     void Start()
     {
-        laserLine = GetComponent<LineRenderer>();
+        laserLine = muzzlePoint.GetComponent<LineRenderer>();
         // Если не выставить слои в инспекторе, ставим "Все" по умолчанию
         if (hitLayers == 0) hitLayers = ~0;
     }

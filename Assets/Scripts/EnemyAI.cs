@@ -11,10 +11,13 @@ public class EnemyAI : MonoBehaviour
 
     void Start()
     {
-        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
-        if (playerObj != null)
+        if (Camera.main != null)
         {
-            playerTarget = playerObj.transform;
+            playerTarget = Camera.main.transform;
+        }
+        else
+        {
+            Debug.LogError("Враг не нашел игрока! Проверь тег MainCamera у CenterEyeAnchor.");
         }
     }
 
