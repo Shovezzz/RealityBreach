@@ -3608,7 +3608,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxHealth: 100
-  hitAudio: {fileID: 0}
+  hitSound: {fileID: 8300000, guid: 6eb2665f21ad1bf45bf243fc5084ac36, type: 3}
 --- !u!1 &1108228097
 GameObject:
   m_ObjectHideFlags: 0

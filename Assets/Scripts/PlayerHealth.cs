@@ -1,22 +1,35 @@
 using UnityEngine;
 
+[RequireComponent(typeof(AudioSource))] 
 public class PlayerHealth : MonoBehaviour
 {
     public int maxHealth = 100;
+
+    [Header("Звуки")]
+    public AudioClip hitSound; 
+
     private int currentHealth;
-    public AudioSource hitAudio;
+    private AudioSource audioSource;
 
     void Start()
     {
+        audioSource = GetComponent<AudioSource>();
         currentHealth = maxHealth;
     }
 
     public void TakeDamage(int damage)
     {
         currentHealth -= damage;
-        GameManager.Instance.UpdateHP(currentHealth);
-        if (hitAudio != null) hitAudio.Play();
-        Debug.Log($"Игрок получил урон! HP: {currentHealth}");
+
+        if (hitSound != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(hitSound);
+        }
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.UpdateHP(currentHealth);
+        }
 
         if (currentHealth <= 0)
         {
@@ -24,21 +37,14 @@ public class PlayerHealth : MonoBehaviour
         }
     }
 
-    void GameOver()
-    {
-        Debug.Log("GAME OVER!");
-
-        if (GameManager.Instance != null)
-        {
-            GameManager.Instance.GameOver();
-        }
-    }
     public void ResetHealth()
     {
         currentHealth = maxHealth;
-        if (GameManager.Instance != null)
-        {
-            GameManager.Instance.UpdateHP(currentHealth);
-        }
+        if (GameManager.Instance != null) GameManager.Instance.UpdateHP(currentHealth);
+    }
+
+    void GameOver()
+    {
+        if (GameManager.Instance != null) GameManager.Instance.GameOver();
     }
 }

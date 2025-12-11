@@ -83,7 +83,10 @@ public class SpawnManager : MonoBehaviour
 
         if (positionFound)
         {
-            GameObject newEnemy = Instantiate(enemyPrefab, pos, Quaternion.identity);
+            Vector3 spawnPos = pos - (normal * 0.5f);
+
+            GameObject newEnemy = Instantiate(enemyPrefab, spawnPos, Quaternion.identity);
+
             newEnemy.transform.rotation = Quaternion.LookRotation(normal);
 
             enemiesToSpawn--;
