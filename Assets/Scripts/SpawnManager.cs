@@ -1,38 +1,76 @@
 using System.Collections;
 using UnityEngine;
-using Meta.XR.MRUtilityKit; 
+using Meta.XR.MRUtilityKit;
 
 public class SpawnManager : MonoBehaviour
 {
-    [Header("Настройки спауна")]
-    public GameObject enemyPrefab;   // Кого спауним
-    public float spawnInterval = 2.0f; // Раз в сколько секунд
+    public static SpawnManager Instance; 
 
-    private float _timer;
+    [Header("Настройки")]
+    public GameObject enemyPrefab;
+    public float timeBetweenWaves = 3.0f; 
 
-    void Start()
+    [Header("Баланс")]
+    public int baseEnemies = 5; 
+    public float baseInterval = 2.0f; 
+
+    private int currentWave = 1;
+    private int enemiesToSpawn; 
+    private int enemiesAlive;   
+    private bool isWaveActive = false;
+    private float spawnTimer = 0f;
+
+    void Awake()
     {
-        _timer = spawnInterval;
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
     }
 
     void Update()
     {
-        // Если MRUK не инициализирован или комната не загружена — ждем
-        if (MRUK.Instance == null || MRUK.Instance.GetCurrentRoom() == null) return;
-        if (GameManager.Instance != null && !GameManager.Instance.isGameActive) return;
+        if (GameManager.Instance == null || !GameManager.Instance.isGameActive || GameManager.Instance.isPaused) return;
 
-        _timer -= Time.deltaTime;
-        if (_timer <= 0)
+        if (!isWaveActive) return;
+
+        // Логика спауна
+        if (enemiesToSpawn > 0)
         {
-            SpawnEnemy();
-            _timer = spawnInterval;
+            spawnTimer -= Time.deltaTime;
+            if (spawnTimer <= 0)
+            {
+                SpawnEnemy();
+                float currentInterval = Mathf.Max(0.5f, baseInterval - (currentWave * 0.1f));
+                spawnTimer = currentInterval;
+            }
         }
     }
 
-    public void SpawnEnemy()
+    public void StartFirstWave()
     {
-        MRUKRoom room = MRUK.Instance.GetCurrentRoom();
+        currentWave = 1;
+        StartCoroutine(StartWaveRoutine());
+    }
 
+    IEnumerator StartWaveRoutine()
+    {
+        isWaveActive = false;
+
+        GameManager.Instance.UpdateWave(currentWave);
+        Debug.Log($"--- Волная {currentWave} начинается через {timeBetweenWaves} сек ---");
+
+        yield return new WaitForSeconds(timeBetweenWaves);
+
+        enemiesToSpawn = baseEnemies + ((currentWave - 1) * 2);
+        enemiesAlive = enemiesToSpawn;
+
+        isWaveActive = true;
+    }
+
+    void SpawnEnemy()
+    {
+        if (MRUK.Instance == null || MRUK.Instance.GetCurrentRoom() == null) return;
+
+        MRUKRoom room = MRUK.Instance.GetCurrentRoom();
         LabelFilter filter = new LabelFilter(MRUKAnchor.SceneLabels.WALL_FACE);
 
         bool positionFound = room.GenerateRandomPositionOnSurface(
@@ -46,11 +84,26 @@ public class SpawnManager : MonoBehaviour
         if (positionFound)
         {
             GameObject newEnemy = Instantiate(enemyPrefab, pos, Quaternion.identity);
-
-            // Поворачиваем врага спиной к стене
             newEnemy.transform.rotation = Quaternion.LookRotation(normal);
 
-            Debug.Log("Враг появился на стене!");
+            enemiesToSpawn--;
         }
+    }
+
+    public void OnEnemyKilled()
+    {
+        enemiesAlive--;
+
+        if (enemiesAlive <= 0 && enemiesToSpawn <= 0)
+        {
+            WaveCompleted();
+        }
+    }
+
+    void WaveCompleted()
+    {
+        Debug.Log("Волна пройдена!");
+        currentWave++;
+        StartCoroutine(StartWaveRoutine()); 
     }
 }

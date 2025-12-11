@@ -31,7 +31,11 @@ public class SimpleBlaster : MonoBehaviour
     {
         DrawLaser(); 
 
-        if (GameManager.Instance != null && !GameManager.Instance.isGameActive) return;
+        if (GameManager.Instance != null)
+        {
+            if (!GameManager.Instance.isGameActive || GameManager.Instance.isPaused) return;
+        }
+
         if (EventSystem.current.IsPointerOverGameObject()) return;
 
         if (OVRInput.GetDown(OVRInput.Button.SecondaryIndexTrigger))

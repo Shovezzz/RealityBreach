@@ -25,6 +25,11 @@ public class EnemyHealth : MonoBehaviour
             Instantiate(explosionPrefab, transform.position, transform.rotation);
         }
 
+        if (SpawnManager.Instance != null)
+        {
+            SpawnManager.Instance.OnEnemyKilled();
+        }
+
         Destroy(gameObject);
     }
 }

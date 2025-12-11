@@ -27,7 +27,18 @@ public class PlayerHealth : MonoBehaviour
     void GameOver()
     {
         Debug.Log("GAME OVER!");
-        // Тут потом добавим остановку игры и экран смерти
-        Time.timeScale = 0; // Пауза игры
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.GameOver();
+        }
+    }
+    public void ResetHealth()
+    {
+        currentHealth = maxHealth;
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.UpdateHP(currentHealth);
+        }
     }
 }
