@@ -36,10 +36,10 @@ TagManager:
   - Overlay UI
   - Water
   - UI
-  - 
-  - 
-  - 
-  - 
+  - AlwaysVisible
+  - Environment
+  - Player
+  - Enemy
   - 
   - 
   - 

@@ -12,7 +12,10 @@ public class SpawnManager : MonoBehaviour
 
     [Header("Ѕаланс")]
     public int baseEnemies = 5; 
-    public float baseInterval = 2.0f; 
+    public float baseInterval = 2.0f;
+
+    [Header("Ёффекты")]
+    public GameObject portalPrefab;
 
     private int currentWave = 1;
     private int enemiesToSpawn; 
@@ -74,19 +77,25 @@ public class SpawnManager : MonoBehaviour
         LabelFilter filter = new LabelFilter(MRUKAnchor.SceneLabels.WALL_FACE);
 
         bool positionFound = room.GenerateRandomPositionOnSurface(
-            MRUK.SurfaceType.VERTICAL,
+            (MRUK.SurfaceType)~0,
             0.1f,
             filter,
-            out Vector3 pos,
-            out Vector3 normal
+            out Vector3 surfacePos, 
+            out Vector3 normal      
         );
 
         if (positionFound)
         {
-            Vector3 spawnPos = pos - (normal * 0.5f);
+            if (portalPrefab != null)
+            {
+                Vector3 portalPos = surfacePos + (normal * 0.01f);
+                GameObject portal = Instantiate(portalPrefab, portalPos, Quaternion.identity);
 
+                portal.transform.rotation = Quaternion.LookRotation(normal);
+            }
+
+            Vector3 spawnPos = surfacePos - (normal * 0.5f); 
             GameObject newEnemy = Instantiate(enemyPrefab, spawnPos, Quaternion.identity);
-
             newEnemy.transform.rotation = Quaternion.LookRotation(normal);
 
             enemiesToSpawn--;

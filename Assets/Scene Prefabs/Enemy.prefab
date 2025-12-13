@@ -119,8 +119,13 @@ MonoBehaviour:
   speed: 1.5
   damage: 10
   stopDistance: 0.5
-  spawnMoveTime: 1.5
+  spawnMoveTime: 1.2
   spawnSound: {fileID: 8300000, guid: 1df1bfc32b1b64c4fb0e056510bb0962, type: 3}
+  obstacleCheckDistance: 1
+  obstacleMask:
+    serializedVersion: 2
+    m_Bits: 255
+  bodyRadius: 0.16
 --- !u!82 &552018668245959378
 AudioSource:
   m_ObjectHideFlags: 0
