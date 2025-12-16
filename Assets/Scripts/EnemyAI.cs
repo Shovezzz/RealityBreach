@@ -4,23 +4,35 @@ using System.Collections;
 [RequireComponent(typeof(AudioSource))]
 public class EnemyAI : MonoBehaviour
 {
-    [Header("Характеристики")]
+    public enum EnemyType { Melee, Ranged } // Типы врагов
+
+    [Header("Тип Врага")]
+    public EnemyType combatType = EnemyType.Melee;
+
+    [Header("Общие Характеристики")]
     public float speed = 1.5f;
-    public int damage = 10;
-    public float stopDistance = 0.5f;
+    public int contactDamage = 10; // Урон при столкновении (для всех)
+
+    [Header("Настройки Стрелка (Только для Ranged)")]
+    public GameObject projectilePrefab; // Чем стрелять
+    public Transform firePoint;         // Откуда стрелять
+    public float shootingRange = 3.0f;  // Дистанция стрельбы
+    public float fireRate = 2.0f;       // Пауза между выстрелами
+    public AudioClip shootSound; // <--- НОВАЯ ПЕРЕМЕННАЯ (Звук выстрела)
 
     [Header("Появление")]
     public float spawnMoveTime = 1.5f;
     public AudioClip spawnSound;
 
     [Header("Навигация")]
-    public float obstacleCheckDistance = 1.0f; // Как далеко видеть препятствия
-    public LayerMask obstacleMask; // Что считать препятствием (Стены, Мебель)
+    public float obstacleCheckDistance = 1.0f;
+    public LayerMask obstacleMask;
     public float bodyRadius = 0.3f;
 
     private Transform playerTarget;
     private bool isSpawning = true;
     private AudioSource audioSource;
+    private float fireTimer = 0f;
 
     void Start()
     {
@@ -28,11 +40,12 @@ public class EnemyAI : MonoBehaviour
         if (spawnSound != null) audioSource.PlayOneShot(spawnSound);
 
         if (Camera.main != null) playerTarget = Camera.main.transform;
-
-        // Если маска не настроена, ставим "Все слои" по умолчанию
         if (obstacleMask == 0) obstacleMask = ~0;
 
         StartCoroutine(SpawnRoutine());
+
+        // Чтобы стрелок не выстрелил мгновенно
+        fireTimer = fireRate;
     }
 
     IEnumerator SpawnRoutine()
@@ -44,9 +57,10 @@ public class EnemyAI : MonoBehaviour
 
     void Update()
     {
-        // 1. Фаза Спауна (Тут можно оставить пролет сквозь стену, это красиво)
+        // 1. Фаза Спауна (Вылет из стены)
         if (isSpawning)
         {
+            // Просто летим вперед сквозь всё заданное время
             transform.Translate(Vector3.forward * speed * Time.deltaTime);
             return;
         }
@@ -60,39 +74,82 @@ public class EnemyAI : MonoBehaviour
 
         float distance = Vector3.Distance(transform.position, playerTarget.position);
 
-        if (distance > stopDistance)
+        // --- ЛОГИКА ПОВЕДЕНИЯ ---
+
+        if (combatType == EnemyType.Melee)
         {
-            Vector3 moveDirection = directionToPlayer;
-
-            // --- НОВОЕ: Скольжение вдоль препятствий ---
-            // Пускаем луч (или шар) вперед
-            if (Physics.SphereCast(transform.position, bodyRadius, transform.forward, out RaycastHit hit, obstacleCheckDistance, obstacleMask))
-            {
-                // Вместо того чтобы лететь ВВЕРХ, мы летим ВДОЛЬ поверхности.
-                // ProjectOnPlane берет наш вектор желания (к игроку) и проецирует его на плоскость стены.
-                // Получается движение параллельно стене.
-                moveDirection = Vector3.ProjectOnPlane(directionToPlayer, hit.normal).normalized;
-
-                // Небольшой хак: чуть-чуть отталкиваемся от стены, чтобы не тереться текстурами
-                moveDirection += hit.normal * 0.2f;
-                moveDirection.Normalize();
-            }
-            // ------------------------------------------
-
-            transform.position += moveDirection * speed * Time.deltaTime;
+            // БЛИЖНИЙ БОЙ (Танк, Скаут)
+            // Просто летим к игроку, пока не врежемся
+            MoveToPlayer(directionToPlayer, distance, 0.5f); // 0.5 - дистанция атаки телом
         }
-        else
+        else if (combatType == EnemyType.Ranged)
         {
-            AttackPlayer();
+            // СТРЕЛОК
+            // Летим к игроку, но останавливаемся на дистанции выстрела
+            if (distance > shootingRange)
+            {
+                MoveToPlayer(directionToPlayer, distance, shootingRange);
+            }
+            else
+            {
+                // Стоим и стреляем
+                fireTimer -= Time.deltaTime;
+                if (fireTimer <= 0)
+                {
+                    Shoot();
+                    fireTimer = fireRate;
+                }
+            }
+        }
+
+        // Если любой враг подошел вплотную - бьем телом (на всякий случай)
+        if (distance <= 0.6f)
+        {
+            AttackPlayerMelee();
         }
     }
 
-    void AttackPlayer()
+    void MoveToPlayer(Vector3 directionToPlayer, float currentDistance, float stopDist)
+    {
+        Vector3 moveDirection = directionToPlayer;
+
+        // Обход препятствий
+        if (Physics.SphereCast(transform.position, bodyRadius, transform.forward, out RaycastHit hit, obstacleCheckDistance, obstacleMask))
+        {
+            moveDirection = Vector3.ProjectOnPlane(directionToPlayer, hit.normal).normalized;
+            moveDirection += hit.normal * 0.2f;
+            moveDirection.Normalize();
+        }
+
+        transform.position += moveDirection * speed * Time.deltaTime;
+    }
+
+    void Shoot()
+    {
+        if (projectilePrefab != null && firePoint != null)
+        {
+            // 1. Создаем пулю
+            GameObject bullet = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
+
+            // 2. Поворачиваем на игрока
+            if (playerTarget != null)
+            {
+                bullet.transform.LookAt(playerTarget.position);
+            }
+
+            if (audioSource != null && shootSound != null)
+            {
+                audioSource.PlayOneShot(shootSound);
+            }
+        }
+    }
+
+    void AttackPlayerMelee()
     {
         if (playerTarget != null)
         {
             PlayerHealth hp = playerTarget.GetComponent<PlayerHealth>();
-            if (hp != null) hp.TakeDamage(damage);
+            if (hp != null) hp.TakeDamage(contactDamage);
         }
 
         EnemyHealth myHealth = GetComponent<EnemyHealth>();

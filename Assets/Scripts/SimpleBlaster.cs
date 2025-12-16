@@ -10,7 +10,12 @@ public class SimpleBlaster : MonoBehaviour
 
     [Header("Снаряд")]
     public GameObject bulletPrefab;
-    public float bulletSpeed = 15f; 
+    public float bulletSpeed = 15f;
+
+    [Header("Боевые параметры")]
+    public int weaponDamage = 25;
+    private int defaultDamage;    // Чтобы запомнить норму
+    private Coroutine boostCoroutine; // Чтобы не накладывать эффекты друг на друга
 
     [Header("Визуал")]
     public ParticleSystem muzzleFlash;
@@ -25,6 +30,7 @@ public class SimpleBlaster : MonoBehaviour
         laserLine = muzzlePoint.GetComponent<LineRenderer>();
         // Если не выставить слои в инспекторе, ставим "Все" по умолчанию
         if (hitLayers == 0) hitLayers = ~0;
+        defaultDamage = weaponDamage;
     }
 
     void Update()
@@ -42,6 +48,31 @@ public class SimpleBlaster : MonoBehaviour
         {
             Shoot();
         }
+    }
+
+    public void ActivateDamageBoost(int multiplier, float duration)
+    {
+        // Если бонус уже действует, сбрасываем таймер (останавливаем старую корутину)
+        if (boostCoroutine != null) StopCoroutine(boostCoroutine);
+
+        boostCoroutine = StartCoroutine(DamageBoostRoutine(multiplier, duration));
+    }
+
+    System.Collections.IEnumerator DamageBoostRoutine(int multiplier, float duration)
+    {
+        // 1. Усиливаем
+        weaponDamage = defaultDamage * multiplier;
+        Debug.Log($"DAMAGE BOOST ACTIVATED! New Damage: {weaponDamage}");
+
+        // (Тут можно включить какой-то звук или поменять цвет лазера на время)
+
+        // 2. Ждем
+        yield return new WaitForSeconds(duration);
+
+        // 3. Возвращаем как было
+        weaponDamage = defaultDamage;
+        boostCoroutine = null;
+        Debug.Log("Damage Boost Ended.");
     }
 
     void DrawLaser()
@@ -87,8 +118,9 @@ public class SimpleBlaster : MonoBehaviour
 
             if (mover != null)
             {
-                mover.speed = bulletSpeed; 
-                mover.Setup(targetPoint, targetEnemy);
+                mover.speed = bulletSpeed;
+                // ПЕРЕДАЕМ weaponDamage
+                mover.Setup(targetPoint, targetEnemy, weaponDamage);
             }
         }
     }

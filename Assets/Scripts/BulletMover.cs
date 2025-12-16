@@ -2,22 +2,23 @@ using UnityEngine;
 
 public class BulletMover : MonoBehaviour
 {
-    public float speed = 20f; 
+    public float speed = 20f;
+    public int damage = 25; // УРОН ОТ ПУЛИ (стандартный)
     public GameObject hitEffectPrefab; 
 
     private Vector3 targetPosition;
     private EnemyHealth targetEnemy; 
     private bool isMoving = false;
 
-    public void Setup(Vector3 target, EnemyHealth enemy)
+    public void Setup(Vector3 target, EnemyHealth enemy, int bulletDamage)
     {
+        damage = bulletDamage;
         targetPosition = target;
         targetEnemy = enemy;
 
         transform.LookAt(targetPosition);
         isMoving = true;
 
-        // уничтожить через 3 сек, если что-то пошло не так
         Destroy(gameObject, 3f);
     }
 
@@ -37,12 +38,10 @@ public class BulletMover : MonoBehaviour
 
     void Hit()
     {
-        if (targetEnemy != null)
+        if (targetEnemy != null && targetEnemy.gameObject != null)
         {
-            if (targetEnemy.gameObject != null)
-            {
-                targetEnemy.TakeDamage(); 
-            }
+            // ПЕРЕДАЕМ УРОН
+            targetEnemy.TakeDamage(damage); 
         }
 
         if (hitEffectPrefab != null)
