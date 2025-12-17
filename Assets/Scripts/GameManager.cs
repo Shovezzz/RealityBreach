@@ -12,7 +12,8 @@ public class GameManager : MonoBehaviour
     // œ¿Õ≈À»
     public GameObject mainPanel;
     public GameObject pausePanel;
-    public GameObject gameOverPanel; 
+    public GameObject gameOverPanel;
+    public GameObject rulesPanel; 
 
     // “≈ —“€
     public TextMeshProUGUI scoreText;
@@ -149,10 +150,26 @@ public class GameManager : MonoBehaviour
 
     public void QuitGame() { Application.Quit(); }
     public void GoToMainMenu() { ShowMainMenu(); }
+    public void ShowRules()
+    {
+        mainPanel.SetActive(false);
+        rulesPanel.SetActive(true);
+    }
+    public void HideRules()
+    {
+        rulesPanel.SetActive(false);
+        mainPanel.SetActive(true);
+    }
 
     public void AddScore(int amount)
     {
-        score += amount;
+        float multiplier = 1.0f;
+        if (SpawnManager.Instance != null)
+        {
+            multiplier = 1.0f + (SpawnManager.Instance.GetCurrentWave() * 0.05f);
+        }
+
+        score += Mathf.RoundToInt(amount * multiplier);
         UpdateUI();
     }
 
@@ -179,7 +196,15 @@ public class GameManager : MonoBehaviour
         var enemies = GameObject.FindGameObjectsWithTag("Enemy");
         foreach (var e in enemies) Destroy(e);
 
-        var bullets = GameObject.FindObjectsOfType<BulletMover>();
+        var bullets = FindObjectsOfType<BulletMover>();
         foreach (var b in bullets) Destroy(b.gameObject);
+
+        var enemyBullets = FindObjectsOfType<EnemyProjectile>();
+        foreach (var eb in enemyBullets) Destroy(eb.gameObject);
+
+        var powerUps = FindObjectsOfType<PowerUp>();
+        foreach (var p in powerUps) Destroy(p.gameObject);
+
+        var portals = GameObject.FindGameObjectsWithTag("Portal"); 
     }
 }

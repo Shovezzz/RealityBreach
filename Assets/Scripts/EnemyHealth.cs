@@ -3,7 +3,10 @@ using UnityEngine;
 public class EnemyHealth : MonoBehaviour
 {
     [Header("Здоровье")]
-    public int maxHealth = 100; // Настраивается в инспекторе
+    public int maxHealth = 100; 
+    
+    [Header("Очки")]
+    public int scoreValue = 100;
 
     [Header("Лут и Эффекты")]
     public GameObject explosionPrefab;
@@ -17,48 +20,41 @@ public class EnemyHealth : MonoBehaviour
         currentHealth = maxHealth;
     }
 
-    // ТЕПЕРЬ МЕТОД ПРИНИМАЕТ УРОН
     public void TakeDamage(int damageAmount)
     {
         currentHealth -= damageAmount;
 
-        // Можно добавить эффект мигания или звук попадания здесь
         Debug.Log($"{gameObject.name} получил урон. HP: {currentHealth}");
 
         if (currentHealth <= 0)
         {
-            Die(true); // true = дать очки
+            Die(true); 
         }
     }
 
-    // Самоуничтожение (когда врезался в игрока)
     public void SelfDestruct()
     {
-        Die(false); // false = без очков
+        Die(false); 
     }
 
     private void Die(bool givePoints)
     {
-        // 1. Эффект взрыва
         if (explosionPrefab != null)
         {
             Instantiate(explosionPrefab, transform.position, transform.rotation);
         }
 
-        // 2. Очки (только если убил игрок)
         if (givePoints && GameManager.Instance != null)
         {
-            GameManager.Instance.AddScore(100); // Можно сделать разным для разных врагов
+            GameManager.Instance.AddScore(scoreValue); 
         }
 
-        // 3. Лут (только если убил игрок)
         if (givePoints && Random.Range(0, 100) <= dropChance && lootPrefabs.Length > 0)
         {
             int index = Random.Range(0, lootPrefabs.Length);
             Instantiate(lootPrefabs[index], transform.position, Quaternion.identity);
         }
 
-        // 4. Уведомление спаунера
         if (SpawnManager.Instance != null)
         {
             SpawnManager.Instance.OnEnemyKilled();

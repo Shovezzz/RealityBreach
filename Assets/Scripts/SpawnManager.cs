@@ -1,5 +1,5 @@
 using System.Collections;
-using System.Collections.Generic; // Нужно для списков
+using System.Collections.Generic; 
 using UnityEngine;
 using Meta.XR.MRUtilityKit;
 
@@ -7,7 +7,7 @@ using Meta.XR.MRUtilityKit;
 public struct EnemyWaveConfig
 {
     public GameObject prefab;
-    public int unlockWave; // С какой волны начинает появляться этот враг
+    public int unlockWave; 
 }
 
 public class SpawnManager : MonoBehaviour
@@ -15,7 +15,7 @@ public class SpawnManager : MonoBehaviour
     public static SpawnManager Instance;
 
     [Header("Враги и Прогрессия")]
-    public List<EnemyWaveConfig> enemyConfigs; // Сюда закинем наши префабы
+    public List<EnemyWaveConfig> enemyConfigs; 
 
     [Header("Настройки")]
     public float timeBetweenWaves = 3.0f;
@@ -24,7 +24,6 @@ public class SpawnManager : MonoBehaviour
     [Header("Эффекты")]
     public GameObject portalPrefab;
 
-    // ... (остальные переменные: currentWave, enemiesToSpawn и т.д. остаются) ...
     [SerializeField] private int currentWave = 1;
     [SerializeField] private int enemiesToSpawn;
     [SerializeField] private int enemiesAlive;
@@ -33,7 +32,6 @@ public class SpawnManager : MonoBehaviour
 
     void Awake() { if (Instance == null) Instance = this; else Destroy(gameObject); }
 
-    // ... Update() ОСТАВЛЯЕМ БЕЗ ИЗМЕНЕНИЙ ...
     void Update()
     {
         if (GameManager.Instance == null || !GameManager.Instance.isGameActive || GameManager.Instance.isPaused) return;
@@ -49,8 +47,6 @@ public class SpawnManager : MonoBehaviour
             }
         }
     }
-
-    // ... StartFirstWave и StartWaveRoutine ОСТАВЛЯЕМ БЕЗ ИЗМЕНЕНИЙ ...
     public void StartFirstWave()
     {
         currentWave = 1;
@@ -70,57 +66,45 @@ public class SpawnManager : MonoBehaviour
         isWaveActive = true;
     }
 
-    // --- ГЛАВНОЕ ИЗМЕНЕНИЕ ЗДЕСЬ ---
     void SpawnEnemy()
     {
         enemiesToSpawn--;
 
         if (MRUK.Instance == null || MRUK.Instance.GetCurrentRoom() == null) return;
 
-        // Выбираем врага
         GameObject selectedPrefab = GetRandomEnemyForCurrentWave();
 
         MRUKRoom room = MRUK.Instance.GetCurrentRoom();
         LabelFilter filter = new LabelFilter(MRUKAnchor.SceneLabels.WALL_FACE);
 
-        // Ищем точку на стене
         bool positionFound = room.GenerateRandomPositionOnSurface(
             (MRUK.SurfaceType)~0,
-            0.1f,
+            0.4f,
             filter,
-            out Vector3 surfacePos, // Это точка ПРЯМО НА СТЕНЕ
+            out Vector3 surfacePos, 
             out Vector3 normal
         );
 
         if (positionFound)
         {
-            // --- 1. СПАУНИМ ПОРТАЛ ---
             if (portalPrefab != null)
             {
-                // Сдвигаем портал на 1 см от стены, чтобы он не мерцал (Z-fighting)
                 Vector3 portalPos = surfacePos + (normal * 0.05f);
                 GameObject portal = Instantiate(portalPrefab, portalPos, Quaternion.identity);
 
-                // Поворачиваем портал так, чтобы он лежал на стене
                 portal.transform.rotation = Quaternion.LookRotation(normal);
             }
-            // -------------------------
 
-            // --- 2. СПАУНИМ ВРАГА (Глубоко в стене) ---
-            // Сдвигаем точку спауна врага на 0.5 метра ВГЛУБЬ стены (против нормали)
             Vector3 enemySpawnPos = surfacePos - (normal * 0.5f);
 
             GameObject newEnemy = Instantiate(selectedPrefab, enemySpawnPos, Quaternion.identity);
 
-            // Поворачиваем врага лицом "из стены"
             newEnemy.transform.rotation = Quaternion.LookRotation(normal);
         }
     }
 
-    // Логика выбора врага
     GameObject GetRandomEnemyForCurrentWave()
     {
-        // Собираем список всех, кто доступен на этой волне
         List<GameObject> availableEnemies = new List<GameObject>();
 
         foreach (var config in enemyConfigs)
@@ -131,19 +115,18 @@ public class SpawnManager : MonoBehaviour
             }
         }
 
-        // Если список пуст (ошибка настройки), берем первого
         if (availableEnemies.Count == 0) return enemyConfigs[0].prefab;
 
-        // Возвращаем случайного
         return availableEnemies[Random.Range(0, availableEnemies.Count)];
     }
 
-    // ... OnEnemyKilled и WaveCompleted ОСТАВЛЯЕМ БЕЗ ИЗМЕНЕНИЙ ...
     public void OnEnemyKilled()
     {
         enemiesAlive--;
         if (enemiesAlive <= 0 && enemiesToSpawn <= 0) WaveCompleted();
     }
+
+    public int GetCurrentWave() { return currentWave; }
 
     void WaveCompleted()
     {

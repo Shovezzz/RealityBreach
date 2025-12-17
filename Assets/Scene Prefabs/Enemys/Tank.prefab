@@ -79,12 +79,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxHealth: 150
+  scoreValue: 250
   explosionPrefab: {fileID: 1318245693250807960, guid: 6ff6f9f540c940f4e9771c385f35804e,
     type: 3}
   lootPrefabs:
   - {fileID: 812313821223876078, guid: d8c302b24c8f0d04ca9d9bb5d120d57f, type: 3}
   - {fileID: 4628352996225313522, guid: cb55c9b8d621e2f40a08874d3a73dbfb, type: 3}
-  dropChance: 20
+  dropChance: 30
 --- !u!114 &-1472587454769485393
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -105,7 +106,7 @@ MonoBehaviour:
   shootingRange: 3
   fireRate: 2
   shootSound: {fileID: 0}
-  spawnMoveTime: 1.2
+  spawnMoveTime: 1.25
   spawnSound: {fileID: 8300000, guid: 1df1bfc32b1b64c4fb0e056510bb0962, type: 3}
   obstacleCheckDistance: 1
   obstacleMask:
@@ -132,7 +133,7 @@ AudioSource:
   SpatializePostEffects: 0
   Priority: 128
   DopplerLevel: 1
-  MinDistance: 1
+  MinDistance: 1.0076734
   MaxDistance: 500
   Pan2D: 0
   rolloffMode: 0
